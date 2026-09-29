@@ -1,0 +1,86 @@
+{
+  "name": "teager-dsh-launcher",
+  "productName": "Teager DSH Launcher",
+  "version": "1.1.0",
+  "description": "Teager DSH Launcher：自动检测/安装 dsh，内嵌 Web UI，托盘常驻与控制台管理",
+  "main": "src/main/main.js",
+  "author": "TravelDaily",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "icon": "node scripts/make-icon.js",
+    "dist": "node scripts/make-icon.js && electron-builder --win --x64",
+    "dist:mac": "node scripts/make-icon.js && electron-builder --mac",
+    "pack": "node scripts/make-icon.js && electron-builder --win --x64 --dir"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.teager.dsh-launcher",
+    "productName": "Teager DSH Launcher",
+    "copyright": "Copyright 漏 2026 TravelDaily",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "electronLanguages": [
+      "zh-CN",
+      "en-US"
+    ],
+    "mac": {
+      "icon": "build/icon.png",
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "Teager-DSH-Launcher-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Teager DSH Launcher",
+      "installerLanguages": [
+        "zh_CN"
+      ],
+      "language": "2052",
+      "artifactName": "Teager-DSH-Launcher-${version}-Setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "Teager-DSH-Launcher-${version}-Portable.${ext}"
+    }
+  }
+}

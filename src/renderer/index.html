@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'" />
+  <title>Teager DSH Launcher</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ─────────────── 顶部栏 ─────────────── -->
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="../assets/icon.png" alt="" />
+      <div class="brand-text"><b>Teager DSH</b><span>Launcher</span></div>
+    </div>
+
+    <div class="status" id="status" data-s="detecting">
+      <i class="dot"></i><span id="status-text">检测中</span><small id="status-meta"></small>
+    </div>
+
+    <nav class="tabs" id="tabs">
+      <button data-view="ui" class="active">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>界面
+      </button>
+      <button data-view="console">
+        <svg viewBox="0 0 24 24"><path d="m5 8 4 4-4 4"/><path d="M12 17h7"/></svg>控制台<em id="err-badge" class="badge hidden">0</em>
+      </button>
+    </nav>
+
+    <div class="spacer"></div>
+
+    <div class="actions">
+      <button class="btn btn-purple btn-sm" data-act="open-plugin" title="手动安装插件">安装插件</button>
+      <button id="btn-restart" class="btn btn-orange" title="重新启动 DSH 服务">
+        <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg><span>重新启动</span>
+      </button>
+      <button id="btn-browser" class="icon-btn" title="在系统浏览器中打开">
+        <svg viewBox="0 0 24 24"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>
+      </button>
+      <button id="btn-settings" class="icon-btn" title="设置">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </div>
+    <div class="caption-space"></div>
+  </header>
+
+  <main>
+    <!-- ─────────────── 界面视图：内嵌 dsh Web UI ─────────────── -->
+    <section id="view-ui" class="view active">
+      <webview id="dsh" partition="persist:dsh" src="about:blank" allowpopups></webview>
+
+      <div id="banner-plugins" class="banner hidden">
+        <svg viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+        <span>检测到插件发生变化，重新启动 DSH 后才会生效。</span>
+        <button class="btn btn-orange btn-sm" data-act="restart">立即重启</button>
+        <button class="icon-btn icon-btn-sm" data-act="dismiss-plugins" title="稍后">✕</button>
+      </div>
+
+      <!-- 启动 / 异常屏 -->
+      <div id="boot" class="screen">
+        <div class="card boot-card">
+          <div class="boot-head">
+            <div class="boot-icon" id="boot-icon"><span class="spinner"></span></div>
+            <div>
+              <h2 id="boot-title">正在检测 DeepSeek Harness</h2>
+              <p id="boot-sub">正在查找本机的 dsh 安装位置…</p>
+            </div>
+          </div>
+          <ol class="steps" id="boot-steps">
+            <li data-k="detect"><i></i><div><b>检测 DSH 安装</b><small></small></div></li>
+            <li data-k="hub"><i></i><div><b>检查 DSH Plugin Hub（插件市场）</b><small></small></div></li>
+            <li data-k="start"><i></i><div><b>启动 DSH 服务</b><small></small></div></li>
+            <li data-k="load"><i></i><div><b>加载界面</b><small></small></div></li>
+          </ol>
+          <div class="progress indeterminate" id="boot-progress"><span></span></div>
+          <p class="last-log" id="boot-log"></p>
+          <pre class="tail hidden" id="boot-tail"></pre>
+          <div class="btn-row" id="boot-actions"></div>
+        </div>
+      </div>
+
+      <!-- 安装位置选择屏 -->
+      <div id="setup" class="screen hidden">
+        <div class="card install-card">
+          <div class="boot-head">
+            <div class="boot-icon purple">
+              <svg viewBox="0 0 24 24"><path d="M3 7h5l2 2h11v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 12v5"/><path d="m9.5 14.5 2.5 2.5 2.5-2.5"/></svg>
+            </div>
+            <div>
+              <h2>安装 DeepSeek Harness</h2>
+              <p>未在本机找到 dsh。请选择安装位置：运行时、缓存、DSH 数据和工作空间都会放在你指定的目录，不占用系统盘。</p>
+            </div>
+          </div>
+
+          <div class="setup-label">选择磁盘</div>
+          <div class="drive-grid" id="drive-grid"></div>
+
+          <div class="setup-field">
+            <label>安装与缓存目录<small>包含 Node.js 运行时、dsh 程序、npm / pnpm 缓存、DSH 数据（会话、记忆、插件）与临时文件</small></label>
+            <div class="field-row">
+              <input id="setup-root" spellcheck="false" />
+              <button type="button" class="btn btn-ghost btn-sm" data-act="setup-pick-root">浏览</button>
+            </div>
+          </div>
+          <div class="setup-field">
+            <label>工作空间目录<small>dsh 启动时所在目录，即默认工作区</small></label>
+            <div class="field-row">
+              <input id="setup-work" spellcheck="false" />
+              <button type="button" class="btn btn-ghost btn-sm" data-act="setup-pick-work">浏览</button>
+            </div>
+          </div>
+
+          <div class="layout-preview" id="layout-preview"></div>
+          <p class="setup-error hidden" id="setup-error"></p>
+          <div class="btn-row">
+            <button class="btn btn-purple" data-act="setup-begin">开始安装</button>
+            <button class="btn btn-ghost" data-act="pick-dsh">已安装？手动指定 dsh 路径</button>
+            <button class="btn btn-ghost" data-act="show-console">查看控制台</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 安装屏 -->
+      <div id="install" class="screen hidden">
+        <div class="card install-card">
+          <div class="boot-head">
+            <div class="boot-icon purple" id="install-icon"><span class="spinner"></span></div>
+            <div>
+              <h2 id="install-title">正在自动安装 DeepSeek Harness</h2>
+              <p id="install-sub">未在本机找到 dsh，将根据你的系统环境自动安装。</p>
+            </div>
+          </div>
+          <div class="sys-grid" id="sys-grid"></div>
+          <ol class="steps" id="install-steps"></ol>
+          <div class="progress" id="install-progress"><span></span></div>
+          <p class="last-log" id="install-log"></p>
+          <div class="btn-row" id="install-actions"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────── 控制台视图 ─────────────── -->
+    <section id="view-console" class="view">
+      <div class="info-cards">
+        <div class="info c-blue"><label>服务状态</label><b id="i-state">—</b><small id="i-uptime"></small></div>
+        <div class="info c-green"><label>访问地址</label><b id="i-url">—</b><small><a href="#" data-act="open-browser">在浏览器中打开</a></small></div>
+        <div class="info c-purple"><label>DSH 入口</label><b id="i-path" class="mono">—</b><small><span id="i-source"></span> · <a href="#" data-act="open-dsh-dir">打开目录</a></small></div>
+        <div class="info c-orange"><label>版本 / 数据目录 · <a href="#" data-act="open-versions">版本管理</a></label><b id="i-version">—</b><small class="mono"><a href="#" data-act="open-home" id="i-home">—</a></small></div>
+      </div>
+
+      <div class="console-bar">
+        <div class="chips" id="filters">
+          <button class="chip active" data-f="all">全部</button>
+          <button class="chip c-blue" data-f="dsh">服务日志</button>
+          <button class="chip c-green" data-f="cmd">命令输出</button>
+          <button class="chip c-purple" data-f="sys">系统 / 安装</button>
+          <button class="chip c-red" data-f="err">仅错误</button>
+        </div>
+        <div class="spacer"></div>
+        <label class="toggle"><input type="checkbox" id="autoscroll" checked /><span>自动滚动</span></label>
+        <button class="btn btn-purple btn-sm" data-act="open-plugin">安装插件</button>
+        <button class="btn btn-ghost btn-sm" data-act="copy-logs">复制</button>
+        <button class="btn btn-ghost btn-sm" data-act="clear-logs">清空</button>
+        <button class="btn btn-ghost btn-sm" data-act="open-logs">日志目录</button>
+      </div>
+
+      <div class="output-wrap">
+        <div id="output" class="output f-all"></div>
+        <button id="to-bottom" class="to-bottom hidden">↓ 回到底部</button>
+      </div>
+
+      <div class="cmd-quick" id="cmd-quick"></div>
+      <form class="cmd-bar" id="cmd-form" autocomplete="off">
+        <span class="prompt" id="cmd-prompt">PS&gt;</span>
+        <input id="cmd-input" spellcheck="false" placeholder="输入命令后回车执行，例如：dsh plugin --profile web add &lt;插件名&gt;（↑↓ 切换历史）" />
+        <button type="submit" class="btn btn-green" id="cmd-run">运行</button>
+        <button type="button" class="btn btn-red hidden" id="cmd-stop">停止</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- ─────────────── 关闭确认 ─────────────── -->
+  <div class="modal hidden" id="modal-close">
+    <div class="modal-box close-box">
+      <h3>关闭窗口</h3>
+      <p class="muted">请选择关闭窗口时的操作：</p>
+      <div class="choice-row">
+        <button class="choice c-blue" data-close="minimize">
+          <svg viewBox="0 0 24 24"><path d="M4 14h16"/><path d="M12 4v10"/><path d="m8 10 4 4 4-4"/><rect x="3" y="17" width="18" height="4" rx="1"/></svg>
+          <b>最小化到托盘</b><small>DSH 继续在后台运行，随时从托盘恢复</small>
+        </button>
+        <button class="choice c-red" data-close="quit">
+          <svg viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.3 7.2a8 8 0 1 0 11.4 0"/></svg>
+          <b>退出程序</b><small>同时关闭 DSH 服务及其所有进程</small>
+        </button>
+      </div>
+      <label class="check"><input type="checkbox" id="close-remember" /><span>记住我的选择（可在设置中修改）</span></label>
+      <div class="btn-row right"><button class="btn btn-ghost" data-act="close-cancel">取消</button></div>
+    </div>
+  </div>
+
+  <!-- ─────────────── 设置 ─────────────── -->
+  <div class="modal hidden" id="modal-settings">
+    <form class="modal-box settings-box" id="settings-form">
+      <div class="modal-head"><h3>设置</h3><button type="button" class="icon-btn icon-btn-sm" data-act="settings-cancel">✕</button></div>
+      <div class="settings-body">
+        <fieldset class="group g-blue">
+          <legend>DeepSeek Harness</legend>
+          <label>工作目录<small>dsh 启动时所在目录，即默认工作区</small></label>
+          <div class="field-row"><input name="workDir" /><button type="button" class="btn btn-ghost btn-sm" data-pick="dir">浏览</button></div>
+          <div class="field-grid">
+            <div><label>Profile</label><input name="profile" placeholder="web" /></div>
+            <div><label>监听端口<small>留空使用默认 3080，0 为随机；修改后需重启 DSH</small></label><input name="port" inputmode="numeric" placeholder="默认 3080" /></div>
+          </div>
+          <label>额外启动参数<small>追加在 dsh web 之后，例如 --trusted-host 192.168.1.10</small></label>
+          <input name="extraArgs" placeholder="可选" />
+          <label class="check"><input type="checkbox" name="checkPluginHub" /><span>启动前检查 DSH Plugin Hub（插件市场），未安装时自动安装</span></label>
+        </fieldset>
+
+        <fieldset class="group g-orange">
+          <legend>运行环境路径</legend>
+          <p class="group-tip">留空则使用默认（自动在 PATH 与常见位置查找）。点击“获取路径”扫描本机，候选项会作为输入框的自动补全选项；路径可填可执行文件，也可填其所在目录。</p>
+          <label>Node.js<small>node 可执行文件或所在目录</small></label>
+          <div class="field-row">
+            <input name="nodePath" list="dl-node" placeholder="默认（PATH 中的 node）" spellcheck="false" />
+            <button type="button" class="btn btn-ghost btn-sm" data-act="detect-tools" data-field="nodePath">获取路径</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-pick="file" data-kind="node">浏览</button>
+          </div>
+          <label>pnpm<small>pnpm 可执行文件或所在目录（插件管理依赖 pnpm）</small></label>
+          <div class="field-row">
+            <input name="pnpmPath" list="dl-pnpm" placeholder="默认（PATH 中的 pnpm）" spellcheck="false" />
+            <button type="button" class="btn btn-ghost btn-sm" data-act="detect-tools" data-field="pnpmPath">获取路径</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-pick="file" data-kind="pnpm">浏览</button>
+          </div>
+          <label>dsh<small>dsh 可执行文件（启动脚本）</small></label>
+          <div class="field-row">
+            <input name="dshPath" list="dl-dsh" placeholder="默认（自动检测）" spellcheck="false" />
+            <button type="button" class="btn btn-ghost btn-sm" data-act="detect-tools" data-field="dshPath">获取路径</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-pick="file" data-kind="dsh">浏览</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-act="redetect">重新检测</button>
+          </div>
+          <datalist id="dl-node"></datalist>
+          <datalist id="dl-pnpm"></datalist>
+          <datalist id="dl-dsh"></datalist>
+        </fieldset>
+
+        <fieldset class="group g-green">
+          <legend>窗口与后台</legend>
+          <label>关闭窗口时</label>
+          <div class="radios">
+            <label><input type="radio" name="closeAction" value="ask" /><span>每次询问</span></label>
+            <label><input type="radio" name="closeAction" value="minimize" /><span>最小化到托盘</span></label>
+            <label><input type="radio" name="closeAction" value="quit" /><span>退出程序</span></label>
+          </div>
+          <label>插件变更后</label>
+          <div class="radios">
+            <label><input type="radio" name="pluginChange" value="prompt" /><span>提示重启</span></label>
+            <label><input type="radio" name="pluginChange" value="auto" /><span>自动重启</span></label>
+            <label><input type="radio" name="pluginChange" value="ignore" /><span>不处理</span></label>
+          </div>
+          <label class="check"><input type="checkbox" name="launchAtLogin" /><span>开机后在后台预启动 DSH（驻留托盘，打开窗口即可使用）</span></label>
+        </fieldset>
+
+        <fieldset class="group g-purple">
+          <legend>下载与版本</legend>
+          <label>下载镜像源<small>用于下载 / 更新 dsh、Plugin Hub，以及插件市场和控制台中安装插件</small></label>
+          <div class="field-row">
+            <select name="registry">
+              <option value="npmmirror">淘宝 npmmirror（国内推荐）</option>
+              <option value="tencent">腾讯云</option>
+              <option value="huawei">华为云</option>
+              <option value="npmjs">npm 官方</option>
+              <option value="custom">自定义…</option>
+              <option value="auto">自动测速 / 沿用 .npmrc</option>
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" data-act="probe-registry">测速</button>
+          </div>
+          <div class="field-row hidden" id="registry-custom-row"><input name="registryCustom" placeholder="https://your-registry.example.com" spellcheck="false" /></div>
+          <p class="speed-line hidden" id="registry-speed"></p>
+          <label>安装目录<small>自动安装时 Node.js、dsh 与缓存的存放位置</small></label>
+          <div class="field-row"><input name="installRoot" /><button type="button" class="btn btn-ghost btn-sm" data-pick="dir">浏览</button></div>
+          <label>DSH 版本<small>远程拉取版本列表，可更新或回退</small></label>
+          <div class="field-row ver-row-set">
+            <span class="ver-badge" id="set-version">—</span>
+            <button type="button" class="btn btn-purple btn-sm" data-act="open-versions">版本管理 / 检查更新</button>
+          </div>
+        </fieldset>
+      </div>
+      <p class="setup-error hidden" id="settings-error"></p>
+      <div class="btn-row right">
+        <button type="button" class="btn btn-ghost" data-act="settings-cancel">取消</button>
+        <button type="submit" class="btn btn-blue">保存</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ─────────────── DSH 版本管理 ─────────────── -->
+  <div class="modal hidden" id="modal-versions">
+    <div class="modal-box versions-box">
+      <div class="modal-head"><h3>DSH 版本管理</h3><button type="button" class="icon-btn icon-btn-sm" data-act="versions-close">✕</button></div>
+      <div class="ver-summary">
+        <div class="info c-purple"><label>当前版本</label><b id="ver-current">—</b></div>
+        <div class="info c-green"><label>最新版本</label><b id="ver-latest">—</b><small id="ver-hint"></small></div>
+        <div class="info c-blue"><label>下载源</label><b id="ver-registry" class="mono">—</b></div>
+      </div>
+      <div class="ver-toolbar">
+        <label class="toggle"><input type="checkbox" id="ver-alpha" /><span>显示 alpha 版本</span></label>
+        <div class="spacer"></div>
+        <button type="button" class="btn btn-ghost btn-sm" data-act="ver-refresh">刷新列表</button>
+      </div>
+      <div class="ver-list" id="ver-list"><p class="ver-empty">正在获取版本列表…</p></div>
+      <p class="setup-error hidden" id="ver-error"></p>
+      <p class="ver-ok hidden" id="ver-ok"></p>
+      <div class="ver-progress hidden" id="ver-progress">
+        <div class="progress indeterminate"><span></span></div>
+        <p class="last-log" id="ver-progress-text"></p>
+      </div>
+      <p class="ver-note">更新会先停止 DSH 服务，安装完成后自动重新启动；回退到较旧版本可能与已安装的插件不兼容。</p>
+      <div class="btn-row right">
+        <button type="button" class="btn btn-ghost" data-act="versions-close">关闭</button>
+        <button type="button" class="btn btn-purple" id="ver-install" data-act="ver-install" disabled>安装选中版本</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────────── 手动安装插件 ─────────────── -->
+  <div class="modal hidden" id="modal-plugin">
+    <form class="modal-box plugin-box" id="plugin-form" autocomplete="off">
+      <div class="modal-head"><h3>安装插件</h3><button type="button" class="icon-btn icon-btn-sm" data-act="plugin-cancel">✕</button></div>
+      <p class="plugin-hint">安装到当前 Profile「<b id="plugin-profile">web</b>」。支持已发布的 npm 包、本机插件目录、压缩包和 Git 仓库。安装完成后需要重启 DSH 才会生效。</p>
+      <fieldset class="group g-purple" id="plugin-fields">
+        <legend>插件来源</legend>
+        <div class="radios" id="plugin-kinds">
+          <label><input type="radio" name="pluginKind" value="npm" checked /><span>npm 包</span></label>
+          <label><input type="radio" name="pluginKind" value="link" /><span>本地目录</span></label>
+          <label><input type="radio" name="pluginKind" value="tarball" /><span>压缩包</span></label>
+          <label><input type="radio" name="pluginKind" value="git" /><span>Git 仓库</span></label>
+        </div>
+        <div data-kind-panel="npm">
+          <label>包名<small>例如 my-plugin 或 my-plugin@1.2.3</small></label>
+          <input id="plugin-npm" spellcheck="false" placeholder="my-plugin 或 @scope/my-plugin@1.2.3" />
+        </div>
+        <div data-kind-panel="link" class="hidden">
+          <label>插件目录<small>目录内需有带 dsh 字段的 package.json，将以 link: 安装并继续指向原目录</small></label>
+          <div class="field-row">
+            <input id="plugin-link" spellcheck="false" placeholder="选择或粘贴插件目录" />
+            <button type="button" class="btn btn-ghost btn-sm" data-act="plugin-pick-dir">浏览</button>
+          </div>
+        </div>
+        <div data-kind-panel="tarball" class="hidden">
+          <label>压缩包<small>上传 .tgz 或 .tar.gz，无需填写路径</small></label>
+          <div class="upload-zone" id="plugin-upload">
+            <input id="plugin-tarball-file" type="file" accept=".tgz,.tar.gz,application/gzip" />
+            <span id="plugin-upload-text">点击或拖入压缩包</span>
+          </div>
+        </div>
+        <div data-kind-panel="git" class="hidden">
+          <label>仓库地址<small>本机需要已安装 Git</small></label>
+          <input id="plugin-git" spellcheck="false" placeholder="https://github.com/org/repo.git 或 github:org/repo" />
+        </div>
+      </fieldset>
+      <div class="progress indeterminate hidden" id="plugin-progress"><span></span></div>
+      <p class="last-log hidden" id="plugin-log"></p>
+      <p class="setup-error hidden" id="plugin-error"></p>
+      <div class="btn-row right">
+        <button type="button" class="btn btn-ghost" data-act="plugin-cancel">取消</button>
+        <button type="submit" class="btn btn-purple" id="plugin-submit">安装</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="toasts"></div>
+  <script src="app.js"></script>
+</body>
+</html>
